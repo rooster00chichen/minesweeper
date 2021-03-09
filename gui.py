@@ -17,6 +17,7 @@ class GUI:
     def __init__(self, root):
         self.root = root
         self.board_status = 0
+        self.open_status = 0
         self.create_map()
 
     def create_map(self, shape: (int, int) = (9, 9), mines: int = 10):
@@ -37,14 +38,14 @@ class GUI:
     def set_mines(self, mines):
         shape = self.shape
         self.mine = mines
-        for ix in np.random.choice(range(self.size), mines):
+        for ix in np.random.choice(range(self.size), mines, replace=False):
             self.minemap_board[divmod(ix, shape[1])] = MINE
 
         for now_place in range(self.size):
             mine_count = 0
             x, y = divmod(now_place, shape[1])
             if self.minemap_board[x, y] == MINE:
-                self.minemap_board[x, y] = MINE
+                continue
             else:
                 for dx in range(-1, 2, 1):
                     for dy in range(-1, 2, 1):
@@ -88,11 +89,8 @@ class GUI:
                 self.world_board[x][y] = OPEN_BOARD
                 if self.minemap_board[x][y] == MINE:
                     self.board_status = 1
+                self.open_status += 1
             elif self.minemap_board[x][y] == 0:
-                now_label.config(
-                    relief=tk.SUNKEN,
-                    bg=EMPTY_BG_COLOR
-                )
                 search_list = np.zeros(self.shape, dtype=np.int8)
                 self.search_board(0, (x, y), search_list)
         else:
@@ -117,17 +115,6 @@ class GUI:
             )
             self.world_board[x, y] = NONE
 
-    def cheack_status(self):
-        if self.board_status == 1:
-            a = messagebox.askyesno("ゲームオーバ", "コンティニューしますか？\nしない場合は終了します")
-            if a == True:
-                self.board_status = 0
-                self.create_map()
-            if a == False:
-                self.root.destroy()
-
-        self.root.after(250, self.cheack_status)
-
     def search_board(self, word, coordinate: (int, int), search_list):
         x, y = coordinate
         num = x*9+y
@@ -145,6 +132,7 @@ class GUI:
                 bg=EMPTY_BG_COLOR
             )
             self.world_board[x][y] = OPEN_BOARD
+            self.open_status += 1
 
             search_list[x][y] = 1
             self.search_board(word, (x-1, y), search_list)
@@ -155,12 +143,33 @@ class GUI:
             self.search_board(word, (x+1, y+1), search_list)
             self.search_board(word, (x, y-1), search_list)
             self.search_board(word, (x, y+1), search_list)
-        elif self.minemap_board[x][y] != word and self.minemap_board[x][y] != MINE:
+        elif self.minemap_board[x][y] != word and self.minemap_board[x][y] != MINE and self.world_board[x][y] == NONE:
             self.labels[num].config(
                 text=str(self.minemap_board[x][y]),
                 relief=tk.SUNKEN,
                 bg=EMPTY_BG_COLOR
             )
             self.world_board[x][y] = OPEN_BOARD
+            self.open_status += 1
 
             search_list[x, y] = 1
+
+    def cheack_status(self):
+        if self.board_status == 1:
+            a = messagebox.askyesno("ゲームオーバ", "コンティニューしますか？\nしない場合は終了します")
+            if a:
+                self.board_status = 0
+                self.open_status = 0
+                self.create_map()
+            else:
+                self.root.destroy()
+        elif self.open_status == self.size-self.mine:
+            a = messagebox.askyesno("ゲームクリア", "もう一度挑戦しますか？\nしない場合は終了します")
+            if a:
+                self.board_status = 0
+                self.open_status = 0
+                self.create_map()
+            else:
+                self.root.destroy()
+
+        self.root.after(500, self.cheack_status)
