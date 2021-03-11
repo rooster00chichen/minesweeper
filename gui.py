@@ -3,8 +3,6 @@ import subprocess as sp
 import numpy as np
 from tkinter import messagebox
 
-from numpy.core.fromnumeric import shape
-
 MINE = -1
 NONE = 0
 RAISE_FLAG = 1
@@ -14,29 +12,67 @@ RAISE_BG_COLOR = "yellow"
 
 
 class GUI:
-    def __init__(self, root):
-        self.root = root
-        self.board_status = 0
-        self.open_status = 0
-        shape_one = int(input("マインスイーパの正方形の一辺を設定："))
-        if shape_one == 0:
-            shape = (9, 9)
-        else:
+    def __init__(self, shape: (int, int) = (9, 9), mines: int = 10, menu_status=0):
+        if menu_status == 0:
+            self.root = tk.Tk()
+            self.create_map(shape, mines)
+        elif menu_status == 1:
+            self.mode_select()
+
+    def text_to_int(self, text):
+        value = 0
+        for str in text:
+            if str <= '9' and str >= '0':
+                value = value*10+int(str)
+
+        return value
+
+        # return int(text) if text != '' else 0
+
+    def mode_select(self, shape: (int, int) = (9, 9), mines: int = 10):
+        menu = tk.Tk()
+        menu.geometry('600x400')
+        shape_lbl = tk.Label(menu, text='マスの一辺を設定')
+        shape_lbl.place(x=100, y=130)
+        shape_input = tk.Entry(width=20)
+        shape_input.insert(tk.END, str(shape[0]))
+        shape_input.place(x=400, y=130)
+        mine_lbl = tk.Label(menu, text='爆弾の個数を設定')
+        mine_lbl.place(x=100, y=260)
+        mine_input = tk.Entry(width=20)
+        mine_input.insert(tk.END, str(mines))
+        mine_input.place(x=400, y=260)
+
+        def click_btn():
+            shape_one_text = shape_input.get()
+            shape_one = self.text_to_int(shape_one_text)
+            if shape_one == 0:
+                shape_one = 9
             shape = (shape_one, shape_one)
-        mines = int(input("マインスイーパの爆弾を設定："))
-        if mines == 0:
-            mines = 9
-        self.create_map(shape, mines)
+            mine_text = mine_input.get()
+            mines = self.text_to_int(mine_text)
+            if mines == 0:
+                mines = 10
+            menu.destroy()
+            self.root = tk.Tk()
+            self.create_map(shape, mines)
+
+        button = tk.Button(menu, text="確定する", font=("Times New Roman", 32),
+                           bg="green", command=click_btn)
+        button.place(x=600/4*3-64, y=340)
+        menu.mainloop()
 
     def create_map(self, shape: (int, int), mines: int):
+        self.board_status = 0
+        self.open_status = 0
         self.create_map_date(shape, mines)
         self.create_map_view()
+        self.root.after(500, self.cheack_status)
+        self.root.mainloop()
 
     def create_map_date(self, shape: (int, int), mines: int):
         self.set_board(shape)
         self.set_mines(mines)
-
-        print(self.minemap_board)
 
     def set_board(self, shape: (int, int)):
         self.shape = shape
@@ -230,3 +266,7 @@ class GUI:
                 self.root.destroy()
 
         self.root.after(500, self.cheack_status)
+
+
+if __name__ == "__main__":
+    window = GUI(menu_status=1)

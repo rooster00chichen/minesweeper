@@ -1,10 +1,12 @@
 import tkinter as tk
 from gui import *
-from control import *
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    window = GUI(root)
-    # print(window.minemap_board)
-    window.root.after(500, window.cheack_status)
-    root.mainloop()
+    shape_one = int(input("画面の一辺のサイズを設定："))
+    if shape_one == 0:
+        shape_one = 9
+    shape = (shape_one, shape_one)
+    mine = int(input("爆弾の個数を選択:"))
+    if mine == 0:
+        mine = 9
+    window = GUI(shape=shape, mines=mine)

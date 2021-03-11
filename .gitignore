@@ -349,4 +349,17 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+#vs対策
 .DS_Store
+
+#覚書はあげないよ~ん
+onedari.txt
+
+#アプリ化に使用したやつ
+/build/
+/dist/
+
+*.spec
+*.ico
+
+/TCLChanger/
