@@ -53,18 +53,33 @@ class GUI:
             mines = self.text_to_int(mine_text)
             if mines == 0:
                 mines = 10
-            menu.destroy()
-            self.root = tk.Tk()
-            self.create_map(shape, mines)
+            cheack_status = self.cheack_mine_shape_value(shape, mines)
+            if cheack_status:
+                menu.destroy()
+                self.root = tk.Tk()
+                self.create_map(shape, mines)
+            else:
+                error_label = tk.Label(menu, text="画面のサイズと比べて、爆弾が多すぎます。")
+                error_label.place(x=80, y=330)
+                hint_label = tk.Label(
+                    menu, text="ヒント：爆弾= マスの一辺^2 -1 でとりあえずはok")
+                hint_label.place(x=80, y=360)
 
         button = tk.Button(menu, text="確定する", font=("Times New Roman", 32),
                            bg="green", command=click_btn)
         button.place(x=600/4*3-64, y=340)
         menu.mainloop()
 
+    def cheack_mine_shape_value(self, shape: (int, int), mine):
+        size = np.prod(shape)
+        if size <= mine:
+            return False
+        return True
+
     def create_map(self, shape: (int, int), mines: int):
-        self.board_status = 0
+        self.mine_status = 0
         self.open_status = 0
+        self.clear_status = 0
         self.create_map_date(shape, mines)
         self.create_map_view()
         self.root.after(500, self.cheack_status)
@@ -130,10 +145,11 @@ class GUI:
         # 最初に触ったマスが0（空）以外だったらそれを強制的に0に変更
         if self.open_status == 0:
             while True:
-                if self.minemap_board[x][y] == NONE:
+                if self.minemap_board[x][y] == NONE or (self.minemap_board[x][y] != MINE and self.size-self.mine <= 3):
                     break
                 else:
                     self.create_map_date(self.shape, self.mine)
+
         else:
             pass
 
@@ -146,7 +162,7 @@ class GUI:
                 )
                 self.world_board[x][y] = OPEN_BOARD
                 if self.minemap_board[x][y] == MINE:
-                    self.board_status = 1
+                    self.mine_status = 1
                 self.open_status += 1
             elif self.minemap_board[x][y] == 0:
                 search_list = np.zeros(self.shape, dtype=np.int8)
@@ -177,7 +193,7 @@ class GUI:
                                     )
                                     self.world_board[x+dx][y+dy] = OPEN_BOARD
                                     if self.minemap_board[x+dx][y+dy] == MINE:
-                                        self.board_status = 1
+                                        self.mine_status = 1
                                     self.open_status += 1
                                 elif self.minemap_board[x+dx][y+dy] == 0:
                                     search_list = np.zeros(
@@ -186,6 +202,9 @@ class GUI:
                                         0, (x+dx, y+dy), search_list)
         else:
             pass
+
+        if self.open_status == self.size-self.mine:
+            self.clear_status = 1
 
     def raise_flag(self, e):
         now_label = e.widget
@@ -246,26 +265,28 @@ class GUI:
             search_list[x, y] = 1
 
     def cheack_status(self):
-        if self.board_status == 1:
+        if self.mine_status == 1:
             a = messagebox.askyesno(
                 "ゲームオーバ", "ゲームオーバ\nコンティニューしますか？\nしない場合は終了します")
             if a:
-                self.board_status = 0
+                self.mine_status = 0
                 self.open_status = 0
+                self.clear_status = 0
                 self.create_map(self.shape, self.mine)
             else:
                 self.root.destroy()
-        elif self.open_status == self.size-self.mine:
+        elif self.clear_status == 1:
             a = messagebox.askyesno(
                 "ゲームクリア", "ゲームクリア\nもう一度挑戦しますか？\nしない場合は終了します")
             if a:
-                self.board_status = 0
+                self.mine_status = 0
                 self.open_status = 0
+                self.clear_status = 0
                 self.create_map(self.shape, self.mine)
             else:
                 self.root.destroy()
 
-        self.root.after(500, self.cheack_status)
+        self.root.after(250, self.cheack_status)
 
 
 if __name__ == "__main__":

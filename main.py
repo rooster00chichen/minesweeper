@@ -9,4 +9,4 @@ if __name__ == "__main__":
     mine = int(input("爆弾の個数を選択:"))
     if mine == 0:
         mine = 9
-    window = GUI(shape=shape, mines=mine)
+    window = GUI(shape=shape, mines=mine, menu_status=0)
