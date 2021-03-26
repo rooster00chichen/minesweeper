@@ -27,23 +27,58 @@ class GUI:
 
         return value
 
-        # return int(text) if text != '' else 0
-
     def mode_select(self, shape: (int, int) = (9, 9), mines: int = 10):
         menu = tk.Tk()
         menu.geometry('600x400')
-        shape_lbl = tk.Label(menu, text='マスの一辺を設定')
-        shape_lbl.place(x=100, y=130)
-        shape_input = tk.Entry(width=20)
-        shape_input.insert(tk.END, str(shape[0]))
-        shape_input.place(x=400, y=130)
-        mine_lbl = tk.Label(menu, text='爆弾の個数を設定')
-        mine_lbl.place(x=100, y=260)
-        mine_input = tk.Entry(width=20)
-        mine_input.insert(tk.END, str(mines))
-        mine_input.place(x=400, y=260)
+        menu.title("マインスイーパ")
 
-        def click_btn():
+        def click_shape_btn(entry, quantrtity):  # 簡易入力ボタン用処理
+            entry.delete(0, tk.END)
+            entry.insert(tk.END, str(quantrtity))
+
+        def click_mines_btn(shape_entry, mine_entry, denominator: int):
+            shape_num = self.text_to_int(shape_entry.get())
+            mine_input_num = (shape_num**2)//denominator
+            mine_entry.delete(0, tk.END)
+            mine_entry.insert(tk.END, str(mine_input_num))
+
+        shape_lbl = tk.Label(menu, text='マスの一辺を設定')  # マスの入力欄用テキスト
+        shape_lbl.place(x=100, y=110)
+
+        shape_input = tk.Entry(width=20)  # 一辺の長さ入力
+        shape_input.insert(tk.END, str(shape[0]))
+        shape_input.place(x=350, y=110)
+
+        shape_nine_btn = tk.Button(
+            menu, text="9", command=lambda: click_shape_btn(shape_input, 9), bg=EMPTY_BG_COLOR)
+        shape_nine_btn.place(x=350, y=140)
+        shape_fifty_btn = tk.Button(
+            menu, text="15", command=lambda: click_shape_btn(shape_input, 15), bg=EMPTY_BG_COLOR)
+        shape_fifty_btn.place(x=365, y=140)
+        shape_twenty_btn = tk.Button(
+            menu, text="20", command=lambda: click_shape_btn(shape_input, 20), bg=EMPTY_BG_COLOR)
+        shape_twenty_btn.place(x=390, y=140)
+
+        mine_lbl = tk.Label(menu, text='爆弾の個数を設定')  # mine用テキスト
+        mine_lbl.place(x=100, y=210)
+
+        mine_input = tk.Entry(width=20)  # mine入力欄
+        mine_input.insert(tk.END, str(mines))
+        mine_input.place(x=350, y=210)
+
+        mine_third_btn = tk.Button(
+            menu, text="1/3", command=lambda: click_mines_btn(shape_input, mine_input, 3))
+        mine_third_btn.place(x=350, y=235)
+
+        mine_forth_btn = tk.Button(
+            menu, text="1/4", command=lambda: click_mines_btn(shape_input, mine_input, 4))
+        mine_forth_btn.place(x=380, y=235)
+
+        mine_fifth_btn = tk.Button(
+            menu, text="1/5", command=lambda: click_mines_btn(shape_input, mine_input, 5))
+        mine_fifth_btn.place(x=410, y=235)
+
+        def click_ch_btn():
             shape_one_text = shape_input.get()
             shape_one = self.text_to_int(shape_one_text)
             if shape_one == 0:
@@ -66,7 +101,7 @@ class GUI:
                 hint_label.place(x=80, y=360)
 
         button = tk.Button(menu, text="確定する", font=("Times New Roman", 32),
-                           bg="green", command=click_btn)
+                           bg="green", command=click_ch_btn)
         button.place(x=600/4*3-64, y=340)
         menu.mainloop()
 
