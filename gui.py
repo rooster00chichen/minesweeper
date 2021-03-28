@@ -1,20 +1,24 @@
 import tkinter as tk
-import subprocess as sp
+import time
 import numpy as np
 from tkinter import messagebox
+import sys
 
+sys.setrecursionlimit(2000)
 MINE = -1
 NONE = 0
 RAISE_FLAG = 1
 OPEN_BOARD = 2
 EMPTY_BG_COLOR = "lightgray"
 RAISE_BG_COLOR = "yellow"
+MAX_SHAPE_VOLUE = 35
+LABEL_HEIGHT = 16.857142857142858
+LABEL_WIDTH = 13.2
 
 
 class GUI:
     def __init__(self, shape: (int, int) = (9, 9), mines: int = 10, menu_status=0):
         if menu_status == 0:
-            self.root = tk.Tk()
             self.create_map(shape, mines)
         elif menu_status == 1:
             self.mode_select()
@@ -27,7 +31,22 @@ class GUI:
 
         return value
 
-    def mode_select(self, shape: (int, int) = (9, 9), mines: int = 10):
+    def default_size(self, shape):
+        big_size = MAX_SHAPE_VOLUE/shape[1]
+
+        if big_size < 1.5:
+            big_size = int(np.floor(big_size))
+        else:
+            big_size = int(np.ceil(big_size))
+
+        return big_size
+
+    def window_size_decision(self, shape, width, height):
+        window_height = np.ceil(height * shape[0])
+        window_wight = np.ceil(width * shape[1])
+        return '%dx%d' % (window_wight, window_height)
+
+    def mode_select(self, shape=(9, 9), mines=10):
         menu = tk.Tk()
         menu.geometry('600x400')
         menu.title("マインスイーパ")
@@ -67,15 +86,15 @@ class GUI:
         mine_input.place(x=350, y=210)
 
         mine_third_btn = tk.Button(
-            menu, text="1/3", command=lambda: click_mines_btn(shape_input, mine_input, 3))
+            menu, text="1/2", command=lambda: click_mines_btn(shape_input, mine_input, 3))
         mine_third_btn.place(x=350, y=235)
 
         mine_forth_btn = tk.Button(
-            menu, text="1/4", command=lambda: click_mines_btn(shape_input, mine_input, 4))
+            menu, text="1/5", command=lambda: click_mines_btn(shape_input, mine_input, 4))
         mine_forth_btn.place(x=380, y=235)
 
         mine_fifth_btn = tk.Button(
-            menu, text="1/5", command=lambda: click_mines_btn(shape_input, mine_input, 5))
+            menu, text="1/8", command=lambda: click_mines_btn(shape_input, mine_input, 8))
         mine_fifth_btn.place(x=410, y=235)
 
         def click_ch_btn():
@@ -89,11 +108,16 @@ class GUI:
             if mines == 0:
                 mines = 10
             cheack_status = self.cheack_mine_shape_value(shape, mines)
-            if cheack_status:
+            if cheack_status == 0:
                 menu.destroy()
-                self.root = tk.Tk()
                 self.create_map(shape, mines)
-            else:
+            elif cheack_status == -1:
+                error_label = tk.Label(menu, text="画面のサイズと比べて、描画範囲が大きすぎます。")
+                error_label.place(x=80, y=330)
+                hint_label = tk.Label(
+                    menu, text="ヒント：マスの一辺を%d以下にしよう" % MAX_SHAPE_VOLUE)
+                hint_label.place(x=80, y=360)
+            elif cheack_status == -2:
                 error_label = tk.Label(menu, text="画面のサイズと比べて、爆弾が多すぎます。")
                 error_label.place(x=80, y=330)
                 hint_label = tk.Label(
@@ -107,18 +131,24 @@ class GUI:
 
     def cheack_mine_shape_value(self, shape: (int, int), mine):
         size = np.prod(shape)
-        if size <= mine:
-            return False
-        return True
+        if MAX_SHAPE_VOLUE//shape[1] == 0:
+            return -1
+        elif size <= mine:
+            return -2
+        return 0
 
-    def create_map(self, shape: (int, int), mines: int):
+    def create_map(self, shape: (int, int), mines: int, status=0):
+        if status == 0:
+            self.root = tk.Tk()
+            self.root.title("マインスイーパ")
         self.mine_status = 0
         self.open_status = 0
         self.clear_status = 0
         self.create_map_date(shape, mines)
         self.create_map_view()
-        self.root.after(500, self.cheack_status)
-        self.root.mainloop()
+        if status == 0:
+            self.root.after(500, self.cheack_status)
+            self.root.mainloop()
 
     def create_map_date(self, shape: (int, int), mines: int):
         self.set_board(shape)
@@ -127,11 +157,11 @@ class GUI:
     def set_board(self, shape: (int, int)):
         self.shape = shape
         self.size = np.prod(shape)
-        self.minemap_board = np.zeros(shape, dtype=np.int8)
         self.world_board = np.zeros(shape, dtype=np.int8)
 
     def set_mines(self, mines):
         shape = self.shape
+        self.minemap_board = np.zeros(shape, dtype=np.int8)
         self.mine = mines
         for ix in np.random.choice(range(self.size), mines, replace=False):
             self.minemap_board[divmod(ix, shape[1])] = MINE
@@ -152,9 +182,9 @@ class GUI:
 
     def create_map_view(self):
         self.labels = [None]*self.size
-        big_size = 45//self.shape[1]
-        if big_size == 0:
-            big_size = 1
+        big_size = self.default_size(self.shape)
+        a = True
+
         for j in range(self.shape[0]):
             for i in range(self.shape[1]):
                 # まずはテキストなしでラベルを作成
@@ -164,8 +194,12 @@ class GUI:
                     height=1*big_size,
                     bg=EMPTY_BG_COLOR,
                     relief=tk.RAISED,
-                    font=(32)
+                    font=32
                 )
+                if a:
+                    self.root.geometry(self.window_size_decision(
+                        self.shape, label.winfo_reqwidth(), label.winfo_reqheight()))
+                    a = False
                 label.num = self.shape[1]*j+i
                 # ラベルを配置
                 label.grid(column=i, row=j)
@@ -183,7 +217,7 @@ class GUI:
                 if self.minemap_board[x][y] == NONE or (self.minemap_board[x][y] != MINE and self.size-self.mine <= 3):
                     break
                 else:
-                    self.create_map_date(self.shape, self.mine)
+                    self.set_mines(self.mine)
 
         else:
             pass
@@ -264,12 +298,6 @@ class GUI:
         x, y = coordinate
         num = x*self.shape[1]+y
 
-        if x < 0 or y < 0 or x >= self.shape[1] or y >= self.shape[0]:
-            return
-
-        if search_list[x][y] == 1:
-            return
-
         if self.minemap_board[x][y] == word:
             self.labels[num].config(
                 text="",
@@ -280,15 +308,16 @@ class GUI:
             self.open_status += 1
 
             search_list[x][y] = 1
-            self.search_board(word, (x-1, y), search_list)
-            self.search_board(word, (x+1, y), search_list)
-            self.search_board(word, (x-1, y-1), search_list)
-            self.search_board(word, (x+1, y-1), search_list)
-            self.search_board(word, (x-1, y+1), search_list)
-            self.search_board(word, (x+1, y+1), search_list)
-            self.search_board(word, (x, y-1), search_list)
-            self.search_board(word, (x, y+1), search_list)
-        elif self.minemap_board[x][y] != word and self.minemap_board[x][y] != MINE and self.world_board[x][y] == NONE:
+            for dx in range(-1, 2, 1):
+                for dy in range(-1, 2, 1):
+                    if x+dx < 0 or y+dy < 0 or x+dx >= self.shape[1] or y+dy >= self.shape[0]:
+                        continue
+                    elif search_list[x+dx][y+dy] == 1:
+                        continue
+                    else:
+                        self.search_board(word, (x+dx, y+dy), search_list)
+
+        elif self.minemap_board[x][y] != MINE and self.world_board[x][y] == NONE:
             self.labels[num].config(
                 text=str(self.minemap_board[x][y]),
                 relief=tk.SUNKEN,
@@ -304,20 +333,14 @@ class GUI:
             a = messagebox.askyesno(
                 "ゲームオーバ", "ゲームオーバ\nコンティニューしますか？\nしない場合は終了します")
             if a:
-                self.mine_status = 0
-                self.open_status = 0
-                self.clear_status = 0
-                self.create_map(self.shape, self.mine)
+                self.create_map(self.shape, self.mine, status=1)
             else:
                 self.root.destroy()
         elif self.clear_status == 1:
             a = messagebox.askyesno(
                 "ゲームクリア", "ゲームクリア\nもう一度挑戦しますか？\nしない場合は終了します")
             if a:
-                self.mine_status = 0
-                self.open_status = 0
-                self.clear_status = 0
-                self.create_map(self.shape, self.mine)
+                self.create_map(self.shape, self.mine, status=1)
             else:
                 self.root.destroy()
 
