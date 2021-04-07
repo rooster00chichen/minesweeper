@@ -1,6 +1,6 @@
 import tkinter as tk
 import numpy as np
-from tkinter import messagebox
+from tkinter import YView, messagebox
 import sys
 
 sys.setrecursionlimit(1230)
@@ -133,7 +133,10 @@ class Minesweeper:
 
         button = tk.Button(menu, text="確定する", font=("Times New Roman", 32),
                            bg="green", command=click_ch_btn)
+        button_quit = tk.Button(menu, text="終了する", font=(
+            "Times New Roman", 32), bg="gray", command=lambda: menu.destroy())
         button.place(x=600/4*3-64, y=340)
+        button_quit.place(x=600/4*1-64, y=340)
         menu.mainloop()
 
     def create_map(self, shape: (int, int), mines: int, status=0):
@@ -335,6 +338,7 @@ class Minesweeper:
                 self.create_map(self.shape, self.mine, status=1)
             else:
                 self.root.destroy()
+                self.mode_select()
         elif self.clear_status == 1:
             a = messagebox.askyesno(
                 "ゲームクリア", "ゲームクリア\nもう一度挑戦しますか？\nしない場合は終了します")
@@ -342,6 +346,7 @@ class Minesweeper:
                 self.create_map(self.shape, self.mine, status=1)
             else:
                 self.root.destroy()
+                self.mode_select()
 
         self.root.after(250, self.cheack_status)
 
