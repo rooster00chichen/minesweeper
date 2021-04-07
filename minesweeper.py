@@ -53,6 +53,89 @@ class Minesweeper:
             return -2
         return 0
 
+    def mode_select(self, shape=(9, 9), mines=10):
+        menu = tk.Tk()
+        menu.geometry('600x400')
+        menu.title("マインスイーパ")
+
+        def click_shape_btn(entry, quantrtity):  # 簡易入力ボタン用処理
+            entry.delete(0, tk.END)
+            entry.insert(tk.END, str(quantrtity))
+
+        def click_mines_btn(shape_entry, mine_entry, denominator: int):
+            shape_num = self.text_to_int(shape_entry.get())
+            mine_input_num = (shape_num**2)//denominator
+            mine_entry.delete(0, tk.END)
+            mine_entry.insert(tk.END, str(mine_input_num))
+
+        shape_lbl = tk.Label(menu, text='マスの一辺を設定')  # マスの入力欄用テキスト
+        shape_lbl.place(x=100, y=110)
+
+        shape_input = tk.Entry(width=20)  # 一辺の長さ入力
+        shape_input.insert(tk.END, str(shape[0]))
+        shape_input.place(x=350, y=110)
+
+        shape_nine_btn = tk.Button(
+            menu, text="9", command=lambda: click_shape_btn(shape_input, 9), bg=EMPTY_BG_COLOR)
+        shape_nine_btn.place(x=350, y=140)
+        shape_fifty_btn = tk.Button(
+            menu, text="15", command=lambda: click_shape_btn(shape_input, 15), bg=EMPTY_BG_COLOR)
+        shape_fifty_btn.place(x=365, y=140)
+        shape_twenty_btn = tk.Button(
+            menu, text="20", command=lambda: click_shape_btn(shape_input, 20), bg=EMPTY_BG_COLOR)
+        shape_twenty_btn.place(x=390, y=140)
+
+        mine_lbl = tk.Label(menu, text='爆弾の個数を設定')  # mine用テキスト
+        mine_lbl.place(x=100, y=210)
+
+        mine_input = tk.Entry(width=20)  # mine入力欄
+        mine_input.insert(tk.END, str(mines))
+        mine_input.place(x=350, y=210)
+
+        mine_third_btn = tk.Button(
+            menu, text="1/2", command=lambda: click_mines_btn(shape_input, mine_input, 3))
+        mine_third_btn.place(x=350, y=235)
+
+        mine_forth_btn = tk.Button(
+            menu, text="1/5", command=lambda: click_mines_btn(shape_input, mine_input, 4))
+        mine_forth_btn.place(x=380, y=235)
+
+        mine_fifth_btn = tk.Button(
+            menu, text="1/8", command=lambda: click_mines_btn(shape_input, mine_input, 8))
+        mine_fifth_btn.place(x=410, y=235)
+
+        def click_ch_btn():
+            shape_one_text = shape_input.get()
+            shape_one = self.text_to_int(shape_one_text)
+            if shape_one == 0:
+                shape_one = 9
+            shape = (shape_one, shape_one)
+            mine_text = mine_input.get()
+            mines = self.text_to_int(mine_text)
+            if mines == 0:
+                mines = 10
+            cheack_status = self.cheack_mine_shape_value(shape, mines)
+            if cheack_status == 0:
+                menu.destroy()
+                self.create_map(shape, mines)
+            elif cheack_status == -1:
+                error_label = tk.Label(menu, text="画面のサイズと比べて、描画範囲が大きすぎます。")
+                error_label.place(x=80, y=330)
+                hint_label = tk.Label(
+                    menu, text="ヒント：マスの一辺を%d以下にしよう" % MAX_SHAPE_VOLUE)
+                hint_label.place(x=80, y=360)
+            elif cheack_status == -2:
+                error_label = tk.Label(menu, text="画面のサイズと比べて、爆弾が多すぎます。")
+                error_label.place(x=80, y=330)
+                hint_label = tk.Label(
+                    menu, text="ヒント：爆弾= マスの一辺^2 -1 でとりあえずはok")
+                hint_label.place(x=80, y=360)
+
+        button = tk.Button(menu, text="確定する", font=("Times New Roman", 32),
+                           bg="green", command=click_ch_btn)
+        button.place(x=600/4*3-64, y=340)
+        menu.mainloop()
+
     def create_map(self, shape: (int, int), mines: int, status=0):
         if status == 0:
             self.root = tk.Tk()
@@ -261,90 +344,6 @@ class Minesweeper:
                 self.root.destroy()
 
         self.root.after(250, self.cheack_status)
-
-
-def mode_select(self, shape=(9, 9), mines=10):
-    menu = tk.Tk()
-    menu.geometry('600x400')
-    menu.title("マインスイーパ")
-
-    def click_shape_btn(entry, quantrtity):  # 簡易入力ボタン用処理
-        entry.delete(0, tk.END)
-        entry.insert(tk.END, str(quantrtity))
-
-    def click_mines_btn(shape_entry, mine_entry, denominator: int):
-        shape_num = self.text_to_int(shape_entry.get())
-        mine_input_num = (shape_num**2)//denominator
-        mine_entry.delete(0, tk.END)
-        mine_entry.insert(tk.END, str(mine_input_num))
-
-    shape_lbl = tk.Label(menu, text='マスの一辺を設定')  # マスの入力欄用テキスト
-    shape_lbl.place(x=100, y=110)
-
-    shape_input = tk.Entry(width=20)  # 一辺の長さ入力
-    shape_input.insert(tk.END, str(shape[0]))
-    shape_input.place(x=350, y=110)
-
-    shape_nine_btn = tk.Button(
-        menu, text="9", command=lambda: click_shape_btn(shape_input, 9), bg=EMPTY_BG_COLOR)
-    shape_nine_btn.place(x=350, y=140)
-    shape_fifty_btn = tk.Button(
-        menu, text="15", command=lambda: click_shape_btn(shape_input, 15), bg=EMPTY_BG_COLOR)
-    shape_fifty_btn.place(x=365, y=140)
-    shape_twenty_btn = tk.Button(
-        menu, text="20", command=lambda: click_shape_btn(shape_input, 20), bg=EMPTY_BG_COLOR)
-    shape_twenty_btn.place(x=390, y=140)
-
-    mine_lbl = tk.Label(menu, text='爆弾の個数を設定')  # mine用テキスト
-    mine_lbl.place(x=100, y=210)
-
-    mine_input = tk.Entry(width=20)  # mine入力欄
-    mine_input.insert(tk.END, str(mines))
-    mine_input.place(x=350, y=210)
-
-    mine_third_btn = tk.Button(
-        menu, text="1/2", command=lambda: click_mines_btn(shape_input, mine_input, 3))
-    mine_third_btn.place(x=350, y=235)
-
-    mine_forth_btn = tk.Button(
-        menu, text="1/5", command=lambda: click_mines_btn(shape_input, mine_input, 4))
-    mine_forth_btn.place(x=380, y=235)
-
-    mine_fifth_btn = tk.Button(
-        menu, text="1/8", command=lambda: click_mines_btn(shape_input, mine_input, 8))
-    mine_fifth_btn.place(x=410, y=235)
-
-    def click_ch_btn():
-        shape_one_text = shape_input.get()
-        shape_one = self.text_to_int(shape_one_text)
-        if shape_one == 0:
-            shape_one = 9
-        shape = (shape_one, shape_one)
-        mine_text = mine_input.get()
-        mines = self.text_to_int(mine_text)
-        if mines == 0:
-            mines = 10
-        cheack_status = self.cheack_mine_shape_value(shape, mines)
-        if cheack_status == 0:
-            menu.destroy()
-            self.create_map(shape, mines)
-        elif cheack_status == -1:
-            error_label = tk.Label(menu, text="画面のサイズと比べて、描画範囲が大きすぎます。")
-            error_label.place(x=80, y=330)
-            hint_label = tk.Label(
-                menu, text="ヒント：マスの一辺を%d以下にしよう" % MAX_SHAPE_VOLUE)
-            hint_label.place(x=80, y=360)
-        elif cheack_status == -2:
-            error_label = tk.Label(menu, text="画面のサイズと比べて、爆弾が多すぎます。")
-            error_label.place(x=80, y=330)
-            hint_label = tk.Label(
-                menu, text="ヒント：爆弾= マスの一辺^2 -1 でとりあえずはok")
-            hint_label.place(x=80, y=360)
-
-    button = tk.Button(menu, text="確定する", font=("Times New Roman", 32),
-                       bg="green", command=click_ch_btn)
-    button.place(x=600/4*3-64, y=340)
-    menu.mainloop()
 
 
 if __name__ == "__main__":
